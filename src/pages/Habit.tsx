@@ -1,11 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Calendar from '../components/Calendar';
+
+interface Habit {
+  id: number;
+  name: string;
+  color: string;
+}
 
 const Habit: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [habitColor, setHabitColor] = useState('#0066cc');
+  const [habit, setHabit] = useState<Habit | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHabit();
+  }, [id]);
+
+  const fetchHabit = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/habits/${id}`);
+      const data = await response.json();
+      setHabit(data);
+    } catch (error) {
+      console.error('Error fetching habit:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateColor = async (color: string) => {
+    try {
+      await fetch(`http://localhost:3000/habits/${id}/color`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ color })
+      });
+      setHabit(prev => prev ? { ...prev, color } : null);
+    } catch (error) {
+      console.error('Error updating color:', error);
+    }
+  };
+
+  if (loading) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -30,10 +68,11 @@ const Habit: React.FC = () => {
         >
           ← Back
         </button>
+        <h1 style={{ color: habit?.color || '#0066cc' }}>{habit?.name || 'Loading...'}</h1>
         <input
           type="color"
-          value={habitColor}
-          onChange={(e) => setHabitColor(e.target.value)}
+          value={habit?.color || '#0066cc'}
+          onChange={(e) => updateColor(e.target.value)}
           style={{
             width: '30px',
             height: '30px',
@@ -44,8 +83,7 @@ const Habit: React.FC = () => {
           }}
         />
       </div>
-      <h1 style={{ color: habitColor, marginBottom: '20px' }}>Habit {id}</h1>
-      <Calendar selectedColor={habitColor} />
+      <Calendar selectedColor={habit?.color || '#0066cc'} habitId={Number(id)} />
     </div>
   );
 };

@@ -1,16 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/calendar.css';
 
 interface CalendarProps {
   selectedColor: string;
+  habitId: number;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ selectedColor }) => {
+const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDays, setSelectedDays] = useState<Date[]>([]);
   
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
+  useEffect(() => {
+    fetchHabitLogs();
+  }, [habitId]);
+
+  const fetchHabitLogs = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/habits/${habitId}/logs`);
+      const dates = await response.json();
+      setSelectedDays(dates.map((dateStr: string) => {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      }));
+    } catch (error) {
+      console.error('Error fetching habit logs:', error);
+    }
+  };
+
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -58,28 +76,41 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor }) => {
 
   const days = getDaysInMonth(currentDate);
 
-  const isDaySelected = (date: Date) => {
-    return selectedDays.some(selectedDate => 
-      selectedDate.getDate() === date.getDate() &&
-      selectedDate.getMonth() === date.getMonth() &&
-      selectedDate.getFullYear() === date.getFullYear()
-    );
-  };
-
-  const toggleDay = (date: Date, isCurrentMonth: boolean) => {
-    if (!isCurrentMonth) return; // Don't allow selecting days from other months
+  const toggleDay = async (date: Date, isCurrentMonth: boolean) => {
+    if (!isCurrentMonth) return;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
     
-    setSelectedDays(prev => {
-      if (isDaySelected(date)) {
-        return prev.filter(selectedDate => 
-          !(selectedDate.getDate() === date.getDate() &&
-            selectedDate.getMonth() === date.getMonth() &&
-            selectedDate.getFullYear() === date.getFullYear())
-        );
+    const isSelected = selectedDays.some(d =>
+      d.getDate() === date.getDate() &&
+      d.getMonth() === date.getMonth() &&
+      d.getFullYear() === date.getFullYear()
+    );
+    try {
+      if (isSelected) {
+        await fetch(`http://localhost:3000/habits/${habitId}/logs`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: dateStr })
+        });
+        setSelectedDays(selectedDays.filter(d =>
+          d.getDate() !== date.getDate() ||
+          d.getMonth() !== date.getMonth() ||
+          d.getFullYear() !== date.getFullYear()
+        ));
       } else {
-        return [...prev, date];
+        await fetch(`http://localhost:3000/habits/${habitId}/logs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: dateStr })
+        });
+        setSelectedDays([...selectedDays, date]);
       }
-    });
+    } catch (error) {
+      console.error('Error toggling habit log:', error);
+    }
   };
 
   return (
@@ -98,9 +129,17 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor }) => {
         {days.map((day, index) => (
           <div
             key={index}
-            className={`day ${isToday(day.date) ? 'today' : ''} ${!day.isCurrentMonth ? 'other-month' : ''} ${isDaySelected(day.date) ? 'selected' : ''}`}
+            className={`day ${isToday(day.date) ? 'today' : ''} ${!day.isCurrentMonth ? 'other-month' : ''} ${selectedDays.some(d => 
+              d.getDate() === day.date.getDate() &&
+              d.getMonth() === day.date.getMonth() &&
+              d.getFullYear() === day.date.getFullYear()
+            ) ? 'selected' : ''}`}
             onClick={() => toggleDay(day.date, day.isCurrentMonth)}
-            style={isDaySelected(day.date) ? { backgroundColor: selectedColor } : undefined}
+            style={selectedDays.some(d => 
+              d.getDate() === day.date.getDate() &&
+              d.getMonth() === day.date.getMonth() &&
+              d.getFullYear() === day.date.getFullYear()
+            ) ? { backgroundColor: selectedColor } : undefined}
           >
             {day.date.getDate()}
           </div>
