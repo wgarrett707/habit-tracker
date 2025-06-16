@@ -66,6 +66,22 @@ const Home: React.FC = () => {
       padding: '20px' 
     }}>
       <h1 style={{ color: 'white', marginBottom: '20px' }}>Habit Tracker</h1>
+      <button 
+        onClick={() => navigate('/all-habits')}
+        style={{ 
+          margin: '10px', 
+          padding: '10px 20px', 
+          borderRadius: '20px', 
+          border: 'none',
+          backgroundColor: '#0066cc',
+          color: 'white',
+          cursor: 'pointer',
+          width: '200px',
+          marginBottom: '20px'
+        }}
+      >
+        See All Habits
+      </button>
       {habits.map((habit) => (
         <button 
           key={habit.id}
