@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.PROD
+  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
+  : 'http://localhost:3000/api';
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
@@ -13,7 +17,7 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch(`http://localhost:3000/auth/${isLogin ? 'login' : 'signup'}`, {
+      const response = await fetch(`${API_URL}/auth/${isLogin ? 'login' : 'signup'}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

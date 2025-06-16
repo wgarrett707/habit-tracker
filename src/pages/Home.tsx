@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.PROD
+  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
+  : 'http://localhost:3000/api';
+
 interface Habit {
   id: number;
   name: string;
@@ -11,9 +15,20 @@ const Home: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>('');
 
   useEffect(() => {
     fetchHabits();
+    // Get username from token
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUsername(payload.username);
+      } catch (error) {
+        console.error('Error parsing token:', error);
+      }
+    }
   }, []);
 
   const getHeaders = () => {
@@ -26,7 +41,7 @@ const Home: React.FC = () => {
 
   const fetchHabits = async () => {
     try {
-      const response = await fetch('http://localhost:3000/habits', {
+      const response = await fetch(`${API_URL}/habits`, {
         headers: getHeaders()
       });
       
@@ -59,7 +74,7 @@ const Home: React.FC = () => {
     const name = prompt('Enter habit name:');
     if (name?.trim()) {
       try {
-        const response = await fetch('http://localhost:3000/habits', {
+        const response = await fetch(`${API_URL}/habits`, {
           method: 'POST',
           headers: getHeaders(),
           body: JSON.stringify({ name: name.trim() }),
@@ -82,7 +97,7 @@ const Home: React.FC = () => {
     e.stopPropagation();
     if (window.confirm('Delete this habit?')) {
       try {
-        const response = await fetch(`http://localhost:3000/habits/${id}`, { 
+        const response = await fetch(`${API_URL}/habits/${id}`, { 
           method: 'DELETE',
           headers: getHeaders()
         });
@@ -153,7 +168,36 @@ const Home: React.FC = () => {
       alignItems: 'center', 
       padding: '20px' 
     }}>
-      <h1 style={{ color: 'white', marginBottom: '20px' }}>Habit Tracker</h1>
+      <div style={{ 
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        zIndex: 1000
+      }}>
+        <span style={{ color: 'white' }}>{username}</span>
+        <button 
+          onClick={() => {
+            localStorage.removeItem('token');
+            navigate('/login');
+          }}
+          style={{
+            background: '#333',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            padding: '8px 16px'
+          }}
+        >
+          Logout
+        </button>
+      </div>
+
+      <h1 style={{ color: 'white', marginBottom: '20px' }}>My Habits</h1>
+
       <button 
         onClick={() => navigate('/all-habits')}
         style={{ 

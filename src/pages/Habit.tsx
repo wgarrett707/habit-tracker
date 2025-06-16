@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Calendar from '../components/Calendar';
 
+const API_URL = import.meta.env.PROD
+  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
+  : 'http://localhost:3000/api';
+
 interface Habit {
   id: number;
   name: string;
@@ -28,7 +32,7 @@ const Habit: React.FC = () => {
 
   const fetchHabit = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/habits/${id}`, {
+      const response = await fetch(`${API_URL}/habits/${id}`, {
         headers: getHeaders()
       });
       const data = await response.json();
@@ -42,7 +46,7 @@ const Habit: React.FC = () => {
 
   const updateColor = async (color: string) => {
     try {
-      await fetch(`http://localhost:3000/habits/${id}/color`, {
+      await fetch(`${API_URL}/habits/${id}/color`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify({ color })

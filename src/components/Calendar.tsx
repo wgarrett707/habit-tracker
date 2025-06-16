@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/calendar.css';
 
+const API_URL = import.meta.env.PROD
+  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
+  : 'http://localhost:3000/api';
+
 interface CalendarProps {
   selectedColor: string;
   habitId: number;
@@ -26,7 +30,7 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
 
   const fetchHabitLogs = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/habits/${habitId}/logs`, {
+      const response = await fetch(`${API_URL}/habits/${habitId}/logs`, {
         headers: getHeaders()
       });
       const dates = await response.json();
@@ -100,7 +104,7 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
     );
     try {
       if (isSelected) {
-        await fetch(`http://localhost:3000/habits/${habitId}/logs`, {
+        await fetch(`${API_URL}/habits/${habitId}/logs`, {
           method: 'DELETE',
           headers: getHeaders(),
           body: JSON.stringify({ date: dateStr })
@@ -111,7 +115,7 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
           d.getFullYear() !== date.getFullYear()
         ));
       } else {
-        await fetch(`http://localhost:3000/habits/${habitId}/logs`, {
+        await fetch(`${API_URL}/habits/${habitId}/logs`, {
           method: 'POST',
           headers: getHeaders(),
           body: JSON.stringify({ date: dateStr })

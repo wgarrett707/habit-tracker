@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AllHabitsCalendar from '../components/AllHabitsCalendar';
 
+const API_URL = import.meta.env.PROD
+  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
+  : 'http://localhost:3000/api';
+
 interface Habit {
   id: number;
   name: string;
@@ -27,7 +31,7 @@ const AllHabits: React.FC = () => {
 
   const fetchHabits = async () => {
     try {
-      const response = await fetch('http://localhost:3000/habits', {
+      const response = await fetch(`${API_URL}/habits`, {
         headers: getHeaders()
       });
       const data = await response.json();

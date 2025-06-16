@@ -5,6 +5,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import path from 'path';
 
 const app = express();
 const port = 3000;
@@ -249,6 +250,14 @@ async function startServer() {
         console.error('Error deleting log:', error);
         res.status(500).json({ error: 'Error deleting log' });
       }
+    });
+
+    // Serve static files from dist
+    app.use(express.static(path.join(process.cwd(), 'dist')));
+
+    // Fallback to index.html for SPA routes (non-API)
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
     });
 
     // Start server

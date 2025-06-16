@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/calendar.css';
 
+const API_URL = import.meta.env.PROD
+  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
+  : 'http://localhost:3000/api';
+
 interface Habit {
   id: number;
   name: string;
@@ -34,7 +38,7 @@ const AllHabitsCalendar: React.FC<AllHabitsCalendarProps> = ({ habits }) => {
     
     for (const habit of habits) {
       try {
-        const response = await fetch(`http://localhost:3000/habits/${habit.id}/logs`, {
+        const response = await fetch(`${API_URL}/habits/${habit.id}/logs`, {
           headers: getHeaders()
         });
         const dates = await response.json();
