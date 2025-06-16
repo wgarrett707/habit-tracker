@@ -17,9 +17,19 @@ const AllHabits: React.FC = () => {
     fetchHabits();
   }, []);
 
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    };
+  };
+
   const fetchHabits = async () => {
     try {
-      const response = await fetch('http://localhost:3000/habits');
+      const response = await fetch('http://localhost:3000/habits', {
+        headers: getHeaders()
+      });
       const data = await response.json();
       setHabits(data);
     } catch (error) {

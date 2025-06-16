@@ -18,9 +18,19 @@ const Habit: React.FC = () => {
     fetchHabit();
   }, [id]);
 
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    };
+  };
+
   const fetchHabit = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/habits/${id}`);
+      const response = await fetch(`http://localhost:3000/habits/${id}`, {
+        headers: getHeaders()
+      });
       const data = await response.json();
       setHabit(data);
     } catch (error) {
@@ -34,7 +44,7 @@ const Habit: React.FC = () => {
     try {
       await fetch(`http://localhost:3000/habits/${id}/color`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ color })
       });
       setHabit(prev => prev ? { ...prev, color } : null);
@@ -68,7 +78,7 @@ const Habit: React.FC = () => {
         >
           ← Back
         </button>
-        <h1 style={{ color: habit?.color || '#0066cc' }}>{habit?.name || 'Loading...'}</h1>
+        <h1 style={{ color: habit?.color || '#0066cc' }}>{habit?.name}</h1>
         <input
           type="color"
           value={habit?.color || '#0066cc'}

@@ -16,9 +16,19 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
     fetchHabitLogs();
   }, [habitId]);
 
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    };
+  };
+
   const fetchHabitLogs = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/habits/${habitId}/logs`);
+      const response = await fetch(`http://localhost:3000/habits/${habitId}/logs`, {
+        headers: getHeaders()
+      });
       const dates = await response.json();
       setSelectedDays(dates.map((dateStr: string) => {
         const [year, month, day] = dateStr.split('-').map(Number);
@@ -92,7 +102,7 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
       if (isSelected) {
         await fetch(`http://localhost:3000/habits/${habitId}/logs`, {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getHeaders(),
           body: JSON.stringify({ date: dateStr })
         });
         setSelectedDays(selectedDays.filter(d =>
@@ -103,7 +113,7 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
       } else {
         await fetch(`http://localhost:3000/habits/${habitId}/logs`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getHeaders(),
           body: JSON.stringify({ date: dateStr })
         });
         setSelectedDays([...selectedDays, date]);

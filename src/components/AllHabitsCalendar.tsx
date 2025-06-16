@@ -21,12 +21,22 @@ const AllHabitsCalendar: React.FC<AllHabitsCalendarProps> = ({ habits }) => {
     fetchAllHabitLogs();
   }, [habits]);
 
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    };
+  };
+
   const fetchAllHabitLogs = async () => {
     const logs: { [key: string]: number[] } = {};
     
     for (const habit of habits) {
       try {
-        const response = await fetch(`http://localhost:3000/habits/${habit.id}/logs`);
+        const response = await fetch(`http://localhost:3000/habits/${habit.id}/logs`, {
+          headers: getHeaders()
+        });
         const dates = await response.json();
         dates.forEach((dateStr: string) => {
           if (!logs[dateStr]) {

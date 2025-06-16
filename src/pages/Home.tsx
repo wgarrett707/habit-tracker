@@ -10,18 +10,46 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchHabits();
   }, []);
 
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    };
+  };
+
   const fetchHabits = async () => {
     try {
-      const response = await fetch('http://localhost:3000/habits');
+      const response = await fetch('http://localhost:3000/habits', {
+        headers: getHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      
+      // Ensure data is an array
+      if (!Array.isArray(data)) {
+        console.error('Received non-array data:', data);
+        setHabits([]);
+        setError('Invalid data format received from server');
+        return;
+      }
+      
       setHabits(data);
+      setError(null);
     } catch (error) {
       console.error('Error fetching habits:', error);
+      setError('Failed to fetch habits');
+      setHabits([]);
     } finally {
       setLoading(false);
     }
@@ -33,15 +61,19 @@ const Home: React.FC = () => {
       try {
         const response = await fetch('http://localhost:3000/habits', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getHeaders(),
           body: JSON.stringify({ name: name.trim() }),
         });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const newHabit = await response.json();
-        setHabits([...habits, newHabit]);
+        setHabits(prevHabits => [...prevHabits, newHabit]);
       } catch (error) {
         console.error('Error adding habit:', error);
+        alert('Failed to add habit');
       }
     }
   };
@@ -49,12 +81,68 @@ const Home: React.FC = () => {
   const deleteHabit = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('Delete this habit?')) {
-      await fetch(`http://localhost:3000/habits/${id}`, { method: 'DELETE' });
-      setHabits(habits.filter(h => h.id !== id));
+      try {
+        const response = await fetch(`http://localhost:3000/habits/${id}`, { 
+          method: 'DELETE',
+          headers: getHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        setHabits(prevHabits => prevHabits.filter(h => h.id !== id));
+      } catch (error) {
+        console.error('Error deleting habit:', error);
+        alert('Failed to delete habit');
+      }
     }
   };
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#1a1a1a', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        color: 'white'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#1a1a1a', 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center',
+        color: 'white',
+        padding: '20px'
+      }}>
+        <div style={{ color: '#ff4444', marginBottom: '20px' }}>{error}</div>
+        <button 
+          onClick={fetchHabits}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '4px',
+            border: 'none',
+            backgroundColor: '#0066cc',
+            color: 'white',
+            cursor: 'pointer'
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ 
