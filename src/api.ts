@@ -1,12 +1,12 @@
 const API_BASE_URL = '/api';
 
-export const getHeaders = () => {
+function getHeaders() {
   const token = localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : ''
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
   };
-};
+}
 
 export const api = {
   async get(endpoint: string) {

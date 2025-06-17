@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const API_URL = import.meta.env.PROD
-  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
-  : 'http://localhost:3000/api';
+import { api } from '../api';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -17,20 +14,8 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/auth/${isLogin ? 'login' : 'signup'}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Something went wrong');
-      }
-
+      const data = await api.post(`/auth/${isLogin ? 'login' : 'signup'}`, { username, password });
+      
       // Store token
       localStorage.setItem('token', data.token);
       

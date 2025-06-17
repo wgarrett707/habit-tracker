@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const API_URL = import.meta.env.PROD
-  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
-  : 'http://localhost:3000/api';
+import { api } from '../api';
 
 interface Habit {
   id: number;
@@ -31,25 +28,9 @@ const Home: React.FC = () => {
     }
   }, []);
 
-  const getHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    };
-  };
-
   const fetchHabits = async () => {
     try {
-      const response = await fetch(`${API_URL}/habits`, {
-        headers: getHeaders()
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
+      const data = await api.get('/habits');
       
       // Ensure data is an array
       if (!Array.isArray(data)) {
@@ -74,17 +55,7 @@ const Home: React.FC = () => {
     const name = prompt('Enter habit name:');
     if (name?.trim()) {
       try {
-        const response = await fetch(`${API_URL}/habits`, {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify({ name: name.trim() }),
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const newHabit = await response.json();
+        const newHabit = await api.post('/habits', { name: name.trim() });
         setHabits(prevHabits => [...prevHabits, newHabit]);
       } catch (error) {
         console.error('Error adding habit:', error);
@@ -97,15 +68,7 @@ const Home: React.FC = () => {
     e.stopPropagation();
     if (window.confirm('Delete this habit?')) {
       try {
-        const response = await fetch(`${API_URL}/habits/${id}`, { 
-          method: 'DELETE',
-          headers: getHeaders()
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        await api.delete(`/habits/${id}`);
         setHabits(prevHabits => prevHabits.filter(h => h.id !== id));
       } catch (error) {
         console.error('Error deleting habit:', error);

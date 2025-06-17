@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Calendar from '../components/Calendar';
-
-const API_URL = import.meta.env.PROD
-  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
-  : 'http://localhost:3000/api';
+import { api } from '../api';
 
 interface Habit {
   id: number;
@@ -13,29 +10,20 @@ interface Habit {
 }
 
 const Habit: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [habit, setHabit] = useState<Habit | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchHabit();
+    if (id) {
+      fetchHabit();
+    }
   }, [id]);
-
-  const getHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    };
-  };
 
   const fetchHabit = async () => {
     try {
-      const response = await fetch(`${API_URL}/habits/${id}`, {
-        headers: getHeaders()
-      });
-      const data = await response.json();
+      const data = await api.get(`/habits/${id}`);
       setHabit(data);
     } catch (error) {
       console.error('Error fetching habit:', error);
@@ -46,11 +34,7 @@ const Habit: React.FC = () => {
 
   const updateColor = async (color: string) => {
     try {
-      await fetch(`${API_URL}/habits/${id}/color`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-        body: JSON.stringify({ color })
-      });
+      await api.patch(`/habits/${id}/color`, { color });
       setHabit(prev => prev ? { ...prev, color } : null);
     } catch (error) {
       console.error('Error updating color:', error);

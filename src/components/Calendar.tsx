@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/calendar.css';
-
-const API_URL = import.meta.env.PROD
-  ? 'https://habit-tracker-fvbhqazba-wgarrett707s-projects.vercel.app/api'
-  : 'http://localhost:3000/api';
+import { api } from '../api';
 
 interface CalendarProps {
   selectedColor: string;
@@ -11,35 +8,26 @@ interface CalendarProps {
 }
 
 const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
+  const [logs, setLogs] = useState<string[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDays, setSelectedDays] = useState<Date[]>([]);
   
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   useEffect(() => {
-    fetchHabitLogs();
-  }, [habitId]);
+    fetchLogs();
+  }, [habitId, currentDate]);
 
-  const getHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    };
-  };
-
-  const fetchHabitLogs = async () => {
+  const fetchLogs = async () => {
     try {
-      const response = await fetch(`${API_URL}/habits/${habitId}/logs`, {
-        headers: getHeaders()
-      });
-      const dates = await response.json();
-      setSelectedDays(dates.map((dateStr: string) => {
+      const data = await api.get(`/habits/${habitId}/logs`);
+      setLogs(data);
+      setSelectedDays(data.map((dateStr: string) => {
         const [year, month, day] = dateStr.split('-').map(Number);
         return new Date(year, month - 1, day);
       }));
     } catch (error) {
-      console.error('Error fetching habit logs:', error);
+      console.error('Error fetching logs:', error);
     }
   };
 
@@ -90,40 +78,16 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
 
   const days = getDaysInMonth(currentDate);
 
-  const toggleDay = async (date: Date, isCurrentMonth: boolean) => {
-    if (!isCurrentMonth) return;
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
-    
-    const isSelected = selectedDays.some(d =>
-      d.getDate() === date.getDate() &&
-      d.getMonth() === date.getMonth() &&
-      d.getFullYear() === date.getFullYear()
-    );
+  const toggleLog = async (date: string) => {
     try {
-      if (isSelected) {
-        await fetch(`${API_URL}/habits/${habitId}/logs`, {
-          method: 'DELETE',
-          headers: getHeaders(),
-          body: JSON.stringify({ date: dateStr })
-        });
-        setSelectedDays(selectedDays.filter(d =>
-          d.getDate() !== date.getDate() ||
-          d.getMonth() !== date.getMonth() ||
-          d.getFullYear() !== date.getFullYear()
-        ));
+      if (logs.includes(date)) {
+        await api.delete(`/habits/${habitId}/logs`);
       } else {
-        await fetch(`${API_URL}/habits/${habitId}/logs`, {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify({ date: dateStr })
-        });
-        setSelectedDays([...selectedDays, date]);
+        await api.post(`/habits/${habitId}/logs`, { date });
       }
+      fetchLogs();
     } catch (error) {
-      console.error('Error toggling habit log:', error);
+      console.error('Error toggling log:', error);
     }
   };
 
@@ -148,7 +112,7 @@ const Calendar: React.FC<CalendarProps> = ({ selectedColor, habitId }) => {
               d.getMonth() === day.date.getMonth() &&
               d.getFullYear() === day.date.getFullYear()
             ) ? 'selected' : ''}`}
-            onClick={() => toggleDay(day.date, day.isCurrentMonth)}
+            onClick={() => toggleLog(`${day.date.getFullYear()}-${day.date.getMonth() + 1}-${day.date.getDate()}`)}
             style={selectedDays.some(d => 
               d.getDate() === day.date.getDate() &&
               d.getMonth() === day.date.getMonth() &&
